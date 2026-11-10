@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>내일 뭐 챙겨? 발표</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#23255C; --indigo:#4A4FE0; --indigo-soft:#E6E7FD; --light:#C9CCF6; --red:#E5484D; --red-soft:#FDE4E5;
+  --green:#17935A; --green-soft:#DCF3E7; --amber:#E8961E; --ink:#1B1D3A; --muted:#6B7090; --soft:#F3F4FB; --white:#FFFFFF;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden}
+body{background:#0E0F24;color:var(--ink);font-family:"Noto Sans KR","Malgun Gothic","맑은 고딕",system-ui,sans-serif;word-break:keep-all}
+button,input,textarea{font:inherit;color:inherit}
+
+/* 16:9 무대: 창 크기에 맞춰 확대·축소 */
+#viewport{position:fixed;inset:0;display:grid;place-items:center}
+#stage{width:1280px;height:720px;position:relative;transform-origin:center center;border-radius:6px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.45)}
+.slide{position:absolute;inset:0;padding:56px 64px 64px;background:var(--white);opacity:0;visibility:hidden;transition:opacity .35s ease, transform .35s ease;transform:translateX(30px)}
+.slide.active{opacity:1;visibility:visible;transform:none}
+.slide.before{transform:translateX(-30px)}
+.slide.dark{background:var(--navy);color:var(--white)}
+
+/* 공통 요소 */
+.pill{display:inline-block;font-size:14px;font-weight:700;color:#fff;background:var(--indigo);border-radius:999px;padding:5px 14px}
+.pill.red{background:var(--red)}
+h2{font-size:40px;font-weight:900;margin:14px 0 30px;letter-spacing:-.02em;line-height:1.25}
+.card{background:var(--soft);border-radius:18px;padding:26px}
+.circle{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;font-size:30px;background:var(--indigo);flex:none}
+.circle.white{background:#fff}
+.circle.red{background:var(--red)}
+.circle.green{background:var(--green)}
+.muted{color:var(--muted)}
+.num{position:absolute;right:30px;bottom:22px;font-size:14px;color:var(--muted)}
+.dark .num{color:var(--light)}
+
+/* 하나씩 나타나는 요소 */
+.frag{opacity:0;transform:translateY(14px);transition:opacity .4s ease, transform .4s ease}
+.frag.on{opacity:1;transform:none}
+
+/* 1. 표지 */
+.cover{display:grid;grid-template-columns:1.4fr 1fr;align-items:center;height:100%}
+.kicker{font-size:20px;color:var(--light)}
+.cover h1{font-size:96px;font-weight:900;margin:14px 0 18px;letter-spacing:-.03em;line-height:1.1}
+.cover .sub{font-size:28px;color:var(--light)}
+.bigcircle{width:300px;height:300px;border-radius:50%;background:var(--indigo);display:grid;place-items:center;font-size:150px;justify-self:center;animation:float 4s ease-in-out infinite}
+@keyframes float{50%{transform:translateY(-12px)}}
+.hint{position:absolute;left:64px;bottom:40px;font-size:16px;color:var(--light);opacity:.8}
+
+/* 2. 4단계 */
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:26px}
+.step{position:relative;min-height:340px;display:flex;flex-direction:column}
+.step .n{font-size:48px;font-weight:900;color:var(--indigo);line-height:1}
+.step .circle{position:absolute;right:22px;top:22px}
+.step h3{font-size:26px;margin:auto 0 10px}
+.step p{font-size:19px;margin:0;color:var(--muted);line-height:1.5}
+
+/* 3. 문제 */
+.three{display:grid;grid-template-columns:repeat(3,1fr);gap:26px}
+.three .card{min-height:300px}
+.three h3{font-size:26px;margin:26px 0 10px}
+.three p{font-size:19px;margin:0;color:var(--muted);line-height:1.55}
+.summary{margin-top:30px;font-size:26px;font-weight:700;font-style:italic;color:var(--red)}
+
+/* 4. 동생에게 */
+.kid{display:grid;grid-template-columns:1.8fr 1fr;gap:40px;align-items:center}
+.bubble{font-size:30px;line-height:1.7;padding:40px 44px}
+.bubble p{margin:0 0 18px}
+.bubble p:last-child{margin:0}
+.bubble b.hl{color:var(--indigo)}
+.kidface{text-align:center}
+.kidface .bigcircle{width:240px;height:240px;font-size:120px;animation:none}
+.kidface .muted{font-size:17px;margin-top:14px}
+
+/* 5. 흐름 */
+.flow{display:grid;grid-template-columns:1fr 40px 1fr 40px 1fr;align-items:stretch}
+.flow .arrow{display:grid;place-items:center;font-size:30px;color:var(--indigo)}
+.flow .card{min-height:420px}
+.fh{display:flex;gap:14px;align-items:center;font-size:24px;font-weight:700;margin-bottom:26px}
+.fh .circle{width:54px;height:54px;font-size:24px}
+.memo{background:#fff;border:2px solid var(--light);border-radius:14px;padding:20px;font-size:22px;line-height:1.5}
+.typing::after{content:"|";animation:blink 1s steps(1) infinite;color:var(--indigo)}
+@keyframes blink{50%{opacity:0}}
+.kv{display:grid;grid-template-columns:76px 1fr;gap:12px;align-items:center;margin-bottom:14px}
+.kv span{font-size:17px;font-weight:700;color:var(--muted)}
+.kv b{background:#fff;border:2px solid var(--light);border-radius:12px;padding:10px 14px;font-size:21px;color:var(--indigo)}
+.ck{display:flex;gap:12px;align-items:center;background:#fff;border:2px solid var(--light);border-radius:12px;padding:12px 16px;margin-bottom:12px;font-size:21px;cursor:pointer;user-select:none;transition:background .2s}
+.ck i{width:28px;height:28px;border-radius:8px;border:2.5px solid var(--muted);display:grid;place-items:center;font-style:normal;font-size:17px;color:#fff;flex:none}
+.ck.done{background:var(--green-soft)}
+.ck.done i{background:var(--green);border-color:var(--green)}
+.ck.done span{text-decoration:line-through;color:var(--muted)}
+.small{font-size:16px;color:var(--muted);margin-top:16px}
+
+/* 6. 네 화면 */
+.grid4{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.tab{display:flex;gap:22px;align-items:flex-start;cursor:pointer;transition:transform .2s, box-shadow .2s;min-height:200px}
+.tab:hover{transform:translateY(-3px);box-shadow:0 10px 24px rgba(35,37,92,.12)}
+.tab h3{font-size:26px;margin:4px 0 8px}
+.tab p{font-size:19px;margin:0;color:var(--muted);line-height:1.5}
+.tab .ex{display:none;margin-top:12px;font-size:17px;background:#fff;border-radius:10px;padding:10px 14px;color:var(--ink)}
+.tab.open .ex{display:block}
+.tab.open{background:var(--indigo-soft)}
+
+/* 7. 데모 */
+.demo-in{display:flex;gap:12px;align-items:center;background:#fff;border:2.5px solid var(--indigo);border-radius:16px;padding:6px 8px 6px 20px}
+.demo-in input{flex:1;border:0;outline:0;font-size:22px;padding:12px 0;background:transparent}
+.demo-in .live{font-size:14px;font-weight:700;color:#fff;background:var(--green);border-radius:999px;padding:4px 12px;white-space:nowrap}
+.exs{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 20px}
+.exs button{font-size:15px;border:1.5px dashed var(--light);background:transparent;border-radius:999px;padding:6px 14px;cursor:pointer;color:var(--muted)}
+.exs button:hover{border-color:var(--indigo);color:var(--indigo)}
+.res{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+.res .card{min-height:330px;box-shadow:0 4px 14px rgba(35,37,92,.08)}
+.rh{display:flex;gap:12px;align-items:center;font-size:23px;font-weight:700;margin-bottom:16px}
+.rh .circle{width:48px;height:48px;font-size:22px}
+.rg{font-size:15px;font-weight:700;color:var(--muted);margin:12px 0 6px}
+.rg:first-child{margin-top:0}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{background:#fff;border-radius:999px;padding:6px 14px;font-size:19px;font-weight:700;color:var(--indigo);animation:pop .3s ease}
+@keyframes pop{from{transform:scale(.85);opacity:0}to{transform:none;opacity:1}}
+.res .empty{color:var(--muted);font-size:17px}
+.extra{margin-top:14px;font-size:16px;color:var(--muted);min-height:24px}
+
+/* 8. 질문 카드 */
+.flips{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.flip{height:210px;perspective:1200px;cursor:pointer}
+.flip .in{position:relative;width:100%;height:100%;transition:transform .55s ease;transform-style:preserve-3d}
+.flip.open .in{transform:rotateY(180deg)}
+.flip .face{position:absolute;inset:0;backface-visibility:hidden;border-radius:18px;padding:28px;display:flex;gap:20px;align-items:center}
+.flip .front{background:var(--soft)}
+.flip .front h3{font-size:28px;margin:0}
+.flip .front small{display:block;font-size:15px;color:var(--muted);font-weight:500;margin-top:8px}
+.flip .back{background:var(--indigo);color:#fff;transform:rotateY(180deg);font-size:23px;line-height:1.55}
+
+/* 9. 비유 */
+.ana{display:grid;grid-template-columns:1fr 60px 1.5fr;gap:0;align-items:center;margin-bottom:18px}
+.ana .l,.ana .r{border-radius:16px;padding:20px 24px;font-size:24px;display:flex;gap:16px;align-items:center;min-height:84px}
+.ana .l{background:var(--soft);font-weight:700}
+.ana .r{background:var(--light)}
+.ana .eq{text-align:center;font-size:32px;font-weight:900;color:var(--muted)}
+.ana .em{font-size:28px}
+
+/* 10. 마무리 */
+.closing{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.closing .circle{width:90px;height:90px;font-size:44px;margin-bottom:34px}
+.closing .lines{font-size:56px;font-weight:900;line-height:1.35;letter-spacing:-.02em}
+.closing .lines span{display:inline-block}
+.closing .sub{font-size:28px;color:var(--light);margin-top:26px}
+
+/* 아래 조작 막대 */
+#bar{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:center;gap:8px;padding:10px;opacity:.15;transition:opacity .3s}
+#bar:hover,body.showbar #bar{opacity:1}
+#bar button{border:0;background:rgba(255,255,255,.14);color:#fff;border-radius:10px;padding:8px 14px;cursor:pointer;font-size:14px}
+#bar button:hover{background:rgba(255,255,255,.28)}
+#bar .count{color:#fff;font-size:14px;padding:8px 6px;min-width:60px;text-align:center}
+#progress{position:fixed;left:0;top:0;height:4px;background:var(--indigo);transition:width .3s}
+
+/* 발표 대본 */
+#notes{position:fixed;left:50%;bottom:58px;transform:translateX(-50%);width:min(900px,92vw);background:rgba(20,22,52,.96);color:#fff;border-radius:16px;padding:18px 22px;font-size:17px;line-height:1.7;display:none;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+#notes.open{display:block}
+#notes b{color:var(--light);font-size:13px;display:block;margin-bottom:4px}
+#help{position:fixed;right:14px;top:14px;color:rgba(255,255,255,.55);font-size:13px;text-align:right;line-height:1.6;pointer-events:none}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<div id="help">← → 넘기기 · F 전체 화면 · N 발표 대본</div>
+<div id="viewport"><div id="stage">
+
+  <!-- 1. 표지 -->
+  <section class="slide dark" data-notes="안녕하세요. 저희 팀이 만든 앱은 '내일 뭐 챙겨?'입니다. 메모 한 줄만 적으면 준비물과 수행평가를 알아서 정리해 주는 앱이에요. 오늘은 이 앱을 파인만 기법, 즉 초등학생도 이해할 수 있게 쉽게 설명하는 방법으로 소개하겠습니다.">
+    <div class="cover">
+      <div>
+        <div class="kicker">해커톤 결과 발표 · 파인만 기법으로 설명하기</div>
+        <h1>내일 뭐 챙겨?</h1>
+        <div class="sub">메모 한 줄로 끝내는 준비물·수행평가 체크 앱</div>
+      </div>
+      <div class="bigcircle">🎒</div>
+    </div>
+    <div class="hint">→ 키나 아래 버튼으로 넘겨 보세요</div>
+  </section>
+
+  <!-- 2. 파인만 4단계 -->
+  <section class="slide" data-notes="파인만 기법은 어려운 내용을 아주 쉽게 설명해 보면서 진짜 이해했는지 확인하는 방법입니다. 1단계로 쉽게 설명하고, 2단계로 직접 해 보고, 3단계로 막히는 질문을 찾아 답하고, 4단계로 익숙한 비유로 정리하겠습니다.">
+    <span class="pill">발표 순서</span>
+    <h2>파인만 기법 4단계로 설명할게요</h2>
+    <div class="steps">
+      <div class="card step frag"><div class="n">1</div><div class="circle white">🧒</div><h3>쉽게 설명하기</h3><p>열 살 동생도 알아듣게</p></div>
+      <div class="card step frag"><div class="n">2</div><div class="circle white">👆</div><h3>직접 해 보기</h3><p>예시 메모로 확인</p></div>
+      <div class="card step frag"><div class="n">3</div><div class="circle white">❓</div><h3>막히는 곳 찾기</h3><p>어려운 질문에 답하기</p></div>
+      <div class="card step frag"><div class="n">4</div><div class="circle white">💡</div><h3>비유로 정리</h3><p>한 줄로 기억하기</p></div>
+    </div>
+  </section>
+
+  <!-- 3. 문제 -->
+  <section class="slide" data-notes="저희가 발견한 문제는 세 가지입니다. 준비물을 깜빡하고, 수행평가 마감을 놓치고, 공지가 단톡방, 칠판, 종례로 흩어져 있다는 점입니다. 종이 알림장은 쓰기 귀찮고, 기억만으로는 부족했습니다.">
+    <span class="pill red">문제</span>
+    <h2>학생들이 매일 겪는 세 가지 문제</h2>
+    <div class="three">
+      <div class="card frag"><div class="circle red">🎒</div><h3>준비물을 깜빡해요</h3><p>체육복이나 미술 도구를 안 가져와서 수업에 지장이 생겨요</p></div>
+      <div class="card frag"><div class="circle red">📅</div><h3>수행평가를 놓쳐요</h3><p>과목마다 마감이 달라서 언제 무엇이 있는지 헷갈려요</p></div>
+      <div class="card frag"><div class="circle red">📢</div><h3>공지가 흩어져 있어요</h3><p>단톡방, 칠판, 종례… 어디서 들었는지 기억나지 않아요</p></div>
+    </div>
+    <div class="summary frag">알림장은 쓰기 귀찮고, 기억만으로는 부족해요</div>
+  </section>
+
+  <!-- 4. 동생에게 설명 -->
+  <section class="slide" data-notes="열 살 동생에게 설명한다면 이렇게 말할 수 있습니다. 생각나는 대로 막 적으면 앱이 언제, 무슨 과목, 무엇을 챙길지 알아서 나눠 주고, 다음 날 아침에는 체크만 하면 끝입니다.">
+    <span class="pill">파인만 1단계 · 쉽게 설명하기</span>
+    <h2>열 살 동생에게 설명한다면</h2>
+    <div class="kid">
+      <div class="card bubble">
+        <p class="frag"><b>생각나는 대로 막 적으면 돼.</b><br>"내일 미술 물감 챙기기"처럼 말이야.</p>
+        <p class="frag">그러면 앱이 <b class="hl">언제, 무슨 과목, 뭘 챙길지</b> 알아서 나눠 줘.</p>
+        <p class="frag"><b>다음 날 아침엔 체크만 하면 끝!</b></p>
+      </div>
+      <div class="kidface"><div class="bigcircle">🧒</div><div class="muted">동생에게 하는 말</div></div>
+    </div>
+  </section>
+
+  <!-- 5. 흐름 -->
+  <section class="slide" data-notes="앱의 흐름은 세 단계입니다. 첫째, 휴대폰에 편하게 한 줄 적습니다. 둘째, 앱이 날짜, 과목, 준비물을 알아서 나눕니다. 셋째, 그날 챙길 것을 과목별 체크리스트로 보여 주고, 챙긴 것은 체크하면 됩니다. (체크 칸을 직접 눌러 보여 주세요.)">
+    <span class="pill">파인만 1단계 · 쉽게 설명하기</span>
+    <h2>적고, 나누고, 체크하면 끝</h2>
+    <div class="flow">
+      <div class="card frag"><div class="fh"><div class="circle">✍️</div>① 막 적기</div>
+        <div class="memo" id="typeMemo"></div><div class="small">휴대폰에 편하게 한 줄</div></div>
+      <div class="arrow frag">➜</div>
+      <div class="card frag"><div class="fh"><div class="circle">🗂️</div>② 알아서 나누기</div>
+        <div class="kv"><span>날짜</span><b>내일 (수)</b></div><div class="kv"><span>과목</span><b>미술</b></div><div class="kv"><span>준비물</span><b>물감, 붓</b></div></div>
+      <div class="arrow frag">➜</div>
+      <div class="card frag"><div class="fh"><div class="circle">✅</div>③ 체크하기</div>
+        <div class="ck" data-ck><i></i><span>🎨 물감</span></div><div class="ck" data-ck><i></i><span>🖌️ 붓</span></div>
+        <div class="small" id="ckCount">눌러서 체크해 보세요 · 0/2 챙김</div></div>
+    </div>
+  </section>
+
+  <!-- 6. 네 화면 -->
+  <section class="slide" data-notes="앱은 네 개의 화면으로 되어 있습니다. 오늘·내일 화면에서 시간표와 챙길 것, 수행평가 알림을 보고, 막 적기 화면에서 메모를 적고, 수행평가 화면에서 D-day를 확인하고, 설정에서 매주 반복되는 준비물을 정합니다. (카드를 누르면 예시가 나와요.)">
+    <span class="pill">파인만 1단계 · 쉽게 설명하기</span>
+    <h2>앱은 딱 네 개의 화면이에요</h2>
+    <div class="grid4">
+      <div class="card tab"><div class="circle">🎒</div><div><h3>오늘·내일</h3><p>오늘과 내일 시간표, 과목별 챙길 것, 수행평가 알림을 한 화면에</p><div class="ex">예) 내일 · 미술: 🎨 물감 ☐ 🖌️ 붓 ☐ · 📝 화학 수행평가 D-2</div></div></div>
+      <div class="card tab"><div class="circle">✍️</div><div><h3>막 적기</h3><p>메모에서 날짜·과목·준비물·수행평가를 자동으로 나눠요</p><div class="ex">예) "금요일 화학 수행평가 보고서" → 수행평가로 등록할까요?</div></div></div>
+      <div class="card tab"><div class="circle">📅</div><div><h3>수행평가</h3><p>D-day 목록과 한 주에 몰린 수행평가 경고</p><div class="ex">예) ⚠️ 이번 주에 수행평가가 3개 몰려 있어요</div></div></div>
+      <div class="card tab"><div class="circle">🔁</div><div><h3>설정 · 매주 반복</h3><p>'체육 시간마다 체육복'처럼 매주 자동으로 들어갈 준비물</p><div class="ex">예) 체육: 👕 체육복 · 👟 운동화 → 체육 있는 날마다 자동</div></div></div>
+    </div>
+  </section>
+
+  <!-- 7. 직접 해 보기 -->
+  <section class="slide" data-notes="직접 해 보겠습니다. '체육 시간마다 체육복, 내일 미술 물감이랑 붓, 금요일 화학 수행평가 보고서 제출'이라고 한 줄로 적으면, 앱이 쉼표 단위로 나눠서 체육복은 매주 반복으로, 물감과 붓은 내일 미술 준비물로, 화학 보고서는 금요일 수행평가로 정리합니다. 이 화면은 실제 앱과 같은 규칙으로 작동하니 심사위원께 직접 적어 보시라고 해도 좋아요.">
+    <span class="pill">파인만 2단계 · 직접 해 보기</span>
+    <h2>한 줄 메모가 이렇게 나뉘어요</h2>
+    <div class="demo-in"><span style="font-size:26px">✍️</span><input id="demoIn" type="text" value="체육 시간마다 체육복, 내일 미술 물감이랑 붓, 금요일 화학 수행평가 보고서 제출" aria-label="메모 입력"><span class="live">실제 앱과 같은 규칙</span></div>
+    <div class="exs" id="exs">
+      <button>다음 영어 시간에 프린트랑 사전 가져와</button>
+      <button>내일 체육복은 안 가져와도 됨, 수학 계산기 챙기기</button>
+      <button>과학 시간마다 보안경, 모레 음악 리코더</button>
+    </div>
+    <div class="res">
+      <div class="card"><div class="rh"><div class="circle">🔁</div>매주 반복</div><div id="rRep"></div></div>
+      <div class="card"><div class="rh"><div class="circle green">📅</div>날짜별 준비물</div><div id="rDay"></div></div>
+      <div class="card"><div class="rh"><div class="circle red">📝</div>수행평가</div><div id="rTask"></div></div>
+    </div>
+    <div class="extra" id="rExtra"></div>
+  </section>
+
+  <!-- 8. 질문 카드 -->
+  <section class="slide" data-notes="쉽게 설명하다 보면 막히는 질문이 생깁니다. AI 없이 어떻게 알아듣느냐는 질문에는, 준비물 단어장과 날짜·과목 규칙으로 찾는다고 답할 수 있습니다. 잘못 알아들으면 미리보기와 수정 기능으로 고치고, 개인정보는 전혀 모으지 않으며, 반복되는 준비물은 한 번만 적으면 됩니다. (카드를 하나씩 눌러 답을 보여 주세요.)">
+    <span class="pill">파인만 3단계 · 막히는 곳 찾기</span>
+    <h2>이런 질문에도 답할 수 있어요</h2>
+    <div class="flips">
+      <div class="flip"><div class="in"><div class="face front"><div class="circle white">🔤</div><h3>Q. AI 없이 어떻게 알아들어?<small>눌러서 답 보기</small></h3></div>
+        <div class="face back">준비물 단어장과 규칙으로 '내일', '금요일', '시간마다' 같은 말을 찾아 나눠요</div></div></div>
+      <div class="flip"><div class="in"><div class="face front"><div class="circle white">🔍</div><h3>Q. 잘못 알아들으면?<small>눌러서 답 보기</small></h3></div>
+        <div class="face back">저장하기 전 미리보기에서 빼고, 저장한 뒤에도 고칠 수 있어요</div></div></div>
+      <div class="flip"><div class="in"><div class="face front"><div class="circle white">🔒</div><h3>Q. 내 정보는 안전해?<small>눌러서 답 보기</small></h3></div>
+        <div class="face back">이름·학번·로그인이 없어요. 기록은 내 휴대폰에만 저장돼요</div></div></div>
+      <div class="flip"><div class="in"><div class="face front"><div class="circle white">🔁</div><h3>Q. 매번 적기 귀찮지 않아?<small>눌러서 답 보기</small></h3></div>
+        <div class="face back">'체육 시간마다'처럼 한 번만 적으면 매주 자동으로 들어가요</div></div></div>
+    </div>
+  </section>
+
+  <!-- 9. 비유 -->
+  <section class="slide" data-notes="익숙한 것에 빗대 보면, 막 적기는 종이 알림장에 휘갈겨 쓰는 것, 알아서 나누기는 서류를 과목별 파일에 꽂아 주는 정리 도우미, 매주 반복은 매주 울리는 알람, 챙길 것 체크는 여행 가기 전 짐 싸기 목록과 같습니다.">
+    <span class="pill">파인만 4단계 · 비유로 정리하기</span>
+    <h2>익숙한 것에 빗대면 이래요</h2>
+    <div class="ana"><div class="l"><span class="em">✍️</span>막 적기</div><div class="eq">≈</div><div class="r frag"><span class="em">📝</span>종이 알림장에 휘갈겨 쓰기</div></div>
+    <div class="ana"><div class="l"><span class="em">🗂️</span>알아서 나누기</div><div class="eq">≈</div><div class="r frag"><span class="em">📁</span>과목별 파일에 꽂아 주는 정리 도우미</div></div>
+    <div class="ana"><div class="l"><span class="em">🔁</span>매주 반복</div><div class="eq">≈</div><div class="r frag"><span class="em">⏰</span>매주 같은 시간에 울리는 알람</div></div>
+    <div class="ana"><div class="l"><span class="em">✅</span>챙길 것 체크</div><div class="eq">≈</div><div class="r frag"><span class="em">🧳</span>여행 가기 전 짐 싸기 목록</div></div>
+  </section>
+
+  <!-- 10. 마무리 -->
+  <section class="slide dark" data-notes="한 줄로 정리하면, 막 적으면 앱이 알아서 나누고, 우리는 체크만 하면 끝입니다. 이상으로 '내일 뭐 챙겨?' 앱 설명을 마치겠습니다.">
+    <div class="closing">
+      <div class="circle">✅</div>
+      <div class="lines"><span class="frag">막 적으면,</span> <span class="frag">알아서 나누고,</span><br><span class="frag">체크하면 끝</span></div>
+      <div class="sub">내일 뭐 챙겨?</div>
+    </div>
+  </section>
+
+</div></div>
+
+<div id="notes"><b>발표 대본</b><span id="notesText"></span></div>
+<div id="bar">
+  <button id="prev">◀ 이전</button><span class="count" id="count"></span><button id="next">다음 ▶</button>
+  <button id="notesBtn">📝 대본</button><button id="fsBtn">⛶ 전체 화면</button>
+</div>
+
+<script>
+/* ================= 슬라이드 넘기기 ================= */
+const slides=[...document.querySelectorAll(".slide")];
+let cur=0;
+slides.forEach((s,i)=>{ const n=document.createElement("div"); n.className="num"; n.textContent=i+1; if(i>0) s.appendChild(n); });
+function fit(){ const s=Math.min(innerWidth/1280,(innerHeight)/720)*0.96; document.getElementById("stage").style.transform=`scale(${s})`; }
+addEventListener("resize",fit); fit();
+const frags=i=>[...slides[i].querySelectorAll(".frag")];
+function show(i, fromBack=false){
+  cur=Math.max(0,Math.min(slides.length-1,i));
+  slides.forEach((s,k)=>{ s.classList.toggle("active",k===cur); s.classList.toggle("before",k<cur); });
+  frags(cur).forEach(f=>f.classList.toggle("on",fromBack));
+  document.getElementById("count").textContent=`${cur+1} / ${slides.length}`;
+  document.getElementById("progress").style.width=`${(cur+1)/slides.length*100}%`;
+  document.getElementById("notesText").textContent=slides[cur].dataset.notes||"";
+  try{ history.replaceState(null,"","#"+(cur+1)); }catch(e){}
+  onEnter(cur, fromBack);
+}
+function next(){ const hidden=frags(cur).filter(f=>!f.classList.contains("on")); if(hidden.length){ hidden[0].classList.add("on"); onFrag(cur); return; } if(cur<slides.length-1) show(cur+1); }
+function prev(){ if(cur>0) show(cur-1,true); }
+document.getElementById("next").onclick=next;
+document.getElementById("prev").onclick=prev;
+document.getElementById("notesBtn").onclick=()=>document.getElementById("notes").classList.toggle("open");
+function fullscreen(){ try{ document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen(); }catch(e){} }
+document.getElementById("fsBtn").onclick=fullscreen;
+addEventListener("keydown",e=>{
+  if(e.target.tagName==="INPUT"||e.target.tagName==="TEXTAREA"){ if(e.key==="Escape") e.target.blur(); return; }
+  if(["ArrowRight","PageDown"," ","Enter"].includes(e.key)){ e.preventDefault(); next(); }
+  else if(["ArrowLeft","PageUp","Backspace"].includes(e.key)){ e.preventDefault(); prev(); }
+  else if(e.key==="Home") show(0); else if(e.key==="End") show(slides.length-1,true);
+  else if(e.key==="f"||e.key==="F") fullscreen();
+  else if(e.key==="n"||e.key==="N") document.getElementById("notes").classList.toggle("open");
+});
+let tx=null; addEventListener("touchstart",e=>{ tx=e.touches[0].clientX; },{passive:true});
+addEventListener("touchend",e=>{ if(tx===null) return; const dx=e.changedTouches[0].clientX-tx; if(Math.abs(dx)>60){ dx<0?next():prev(); } tx=null; });
+let barTimer; addEventListener("mousemove",()=>{ document.body.classList.add("showbar"); clearTimeout(barTimer); barTimer=setTimeout(()=>document.body.classList.remove("showbar"),1800); });
+
+/* ================= 슬라이드별 동작 ================= */
+let typeTimer=null;
+function typeMemo(){
+  const el=document.getElementById("typeMemo"), text="내일 미술 물감이랑 붓 챙기기"; let k=0; clearInterval(typeTimer); el.textContent=""; el.classList.add("typing");
+  typeTimer=setInterval(()=>{ el.textContent=text.slice(0,++k); if(k>=text.length){ clearInterval(typeTimer); el.classList.remove("typing"); } },90);
+}
+function onEnter(i, fromBack){
+  if(i===4 && fromBack){ document.getElementById("typeMemo").textContent="내일 미술 물감이랑 붓 챙기기"; }
+  if(i===6) runDemo();
+}
+function onFrag(i){ if(i===4 && frags(4)[0].classList.contains("on") && !frags(4)[1].classList.contains("on")) typeMemo(); }
+document.querySelectorAll("[data-ck]").forEach(c=>c.onclick=()=>{ c.classList.toggle("done"); c.querySelector("i").textContent=c.classList.contains("done")?"✓":"";
+  const n=document.querySelectorAll("[data-ck].done").length; document.getElementById("ckCount").textContent=n===2?"✅ 다 챙겼어요!":`눌러서 체크해 보세요 · ${n}/2 챙김`; });
+document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>t.classList.toggle("open"));
+document.querySelectorAll(".flip").forEach(f=>f.onclick=()=>f.classList.toggle("open"));
+
+/* ================= 직접 해 보기: 실제 앱과 같은 규칙 (AI 없이 단어장 + 규칙) ================= */
+const DAYS=["월","화","수","목","금","토","일"];
+const TT=[["문학","대수","물리학","영어Ⅰ","체육","확률과 통계","자율활동"],["영어Ⅰ","화학","문학","세계사","음악","대수","정보"],["대수","생명과학","영어Ⅰ","문학","미술","미술",""],["물리학","문학","확률과 통계","체육","영어Ⅰ","화학","동아리"],["세계사","대수","정보","생명과학","문학","영어Ⅰ",""]];
+const ALIAS={"국어":["문학","화법과 언어","독서와 작문"],"수학":["대수","확률과 통계","미적분Ⅰ","기하"],"확통":["확률과 통계"],"영어":["영어Ⅰ","영어Ⅱ"],"과학":["물리학","화학","생명과학","지구과학"],"물리":["물리학"],"생명":["생명과학"],"생물":["생명과학"],"지구":["지구과학"],"사회":["세계사","사회와 문화","경제","정치"],"역사":["세계사","한국사"],"컴퓨터":["정보"],"코딩":["정보"],"창체":["자율활동","동아리"]};
+const DICT=[["공학용 계산기","🧮"],["실험 보고서","🧪"],["클리어파일","📁"],["가정통신문","✉️"],["스케치북","📒"],["증명사진","🖼️"],["4B연필","✏️"],["A4용지","📄"],["체육복","👕"],["운동화","👟"],["실내화","🩴"],["물감","🎨"],["팔레트","🎨"],["도화지","📄"],["색연필","🖍️"],["사인펜","🖊️"],["네임펜","🖊️"],["매직","🖊️"],["형광펜","🖍️"],["연필","✏️"],["지우개","✏️"],["필통","✏️"],["가위","✂️"],["테이프","📎"],["각도기","📐"],["컴퍼스","📐"],["계산기","🧮"],["리코더","🎵"],["단소","🎵"],["실험복","🥼"],["보안경","🥽"],["보고서","📑"],["활동지","📄"],["학습지","📄"],["프린트","📄"],["교과서","📘"],["공책","📓"],["노트북","💻"],["노트","📓"],["파일","📁"],["포스트잇","🗒️"],["USB","💾"],["태블릿","📱"],["이어폰","🎧"],["사전","📕"],["학생증","🪪"],["신분증","🪪"],["사진","🖼️"],["동의서","✍️"],["신청서","✍️"],["회신서","✍️"],["앞치마","🧑‍🍳"],["두건","🧑‍🍳"],["장갑","🧤"],["줄넘기","➰"],["라켓","🏸"],["수건","🧺"],["물병","🥤"],["텀블러","🥤"],["우산","☂️"],["돗자리","🧺"],["마스크","😷"],["색종이","🟥"],["글루건","🧰"],["커터칼","🧰"],["붓","🖌️"],["풀","🧴"],["자","📏"]].sort((a,b)=>b[0].length-a[0].length);
+const ITEM_HINT={"체육복":["체육"],"운동화":["체육"],"줄넘기":["체육"],"라켓":["체육"],"물감":["미술"],"붓":["미술"],"팔레트":["미술"],"스케치북":["미술"],"도화지":["미술"],"4B연필":["미술"],"리코더":["음악"],"단소":["음악"],"실험복":["물리학","화학","생명과학","지구과학"],"보안경":["물리학","화학","생명과학","지구과학"],"실험 보고서":["물리학","화학","생명과학","지구과학"],"노트북":["정보"],"USB":["정보"]};
+const STOP=new Set(["그거","이거","저거","것","거","준비물","각자","모두","꼭","내일","오늘","모레","수행평가","수행","숙제","과제","다들","전부","같이","미리","잘","또","다","시간","수업"]);
+const pad=n=>String(n).padStart(2,"0"), dayIdx=d=>(d.getDay()+6)%7, keyOf=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const fromKey=k=>{const [y,m,dd]=k.split("-").map(Number); return new Date(y,m-1,dd);}, day0=d=>new Date(d.getFullYear(),d.getMonth(),d.getDate());
+const addDays=(d,n)=>{const x=day0(d); x.setDate(x.getDate()+n); return x;}, diffDays=(a,b)=>Math.round((day0(b)-day0(a))/86400000);
+const fmtDate=d=>`${d.getMonth()+1}월 ${d.getDate()}일 (${DAYS[dayIdx(d)]})`;
+const esc=t=>String(t).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const subjectsOn=d=>{const i=dayIdx(d); return i>4?[]:TT[i].filter(Boolean);};
+const nextSchoolDay=d=>{let x=addDays(d,1); for(let i=0;i<14;i++){ if(subjectsOn(x).length) return x; x=addDays(x,1);} return x;};
+const allSubjects=()=>[...new Set(TT.flat().filter(Boolean))];
+const emojiOf=n=>{const w=DICT.find(([k])=>n===k||n.endsWith(k)); return w?w[1]:"📌";};
+const reEsc=s=>s.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+function explicitDate(t,today){
+  if(/모레/.test(t)) return {d:addDays(today,2)}; if(/내일/.test(t)) return {d:addDays(today,1)}; if(/오늘/.test(t)) return {d:today};
+  let m=t.match(/(\d{1,2})\s*[\/.월]\s*(\d{1,2})\s*일?/); if(m){ let d=new Date(today.getFullYear(),+m[1]-1,+m[2]); if(diffDays(today,d)<-30) d=new Date(today.getFullYear()+1,+m[1]-1,+m[2]); return {d}; }
+  m=t.match(/(다음\s*주|담주|이번\s*주)?\s*(월|화|수|목|금)요일/);
+  if(m){ const target="월화수목금".indexOf(m[2]); let d; if(m[1]&&/다음|담/.test(m[1])) d=addDays(today,7-dayIdx(today)+target); else { d=addDays(today,1); while(dayIdx(d)!==target) d=addDays(d,1); } return {d}; }
+  m=t.match(/(?<![월\d])(\d{1,2})\s*일(?!요)/); if(m){ let d=new Date(today.getFullYear(),today.getMonth(),+m[1]); if(diffDays(today,d)<0) d=new Date(today.getFullYear(),today.getMonth()+1,+m[1]); return {d}; }
+  return null;
+}
+function stripItems(t){ for(const [w] of DICT) if(w.length>1) t=t.split(w).join(" ".repeat(w.length)); return t; }
+function findSubject(t){ const tt=stripItems(t); let best=null,at=Infinity;
+  for(const s of allSubjects()){ const i=tt.indexOf(s); if(i>=0&&i<at){at=i;best={name:s};} }
+  for(const a in ALIAS){ const i=tt.indexOf(a); if(i>=0&&i<at){at=i;best={alias:a};} } return best; }
+function resolveSubject(f,date){ if(!f) return null; if(f.name) return f.name; const o=ALIAS[f.alias], td=subjectsOn(date), all=allSubjects(); return o.find(x=>td.includes(x))||o.find(x=>all.includes(x))||o[0]; }
+function nextDayWith(f,today){ let d=addDays(today,1); for(let i=0;i<14;i++){ const s=subjectsOn(d); if(f.name?s.includes(f.name):ALIAS[f.alias].some(o=>s.includes(o))) return d; d=addDays(d,1);} return null; }
+const NEG=/^[은는을를이가도]?\s*(?:안\s|안가|안챙|필요\s?없|말고|없어도|빼고|제외)/;
+function extractItems(t){ let s=" "+t+" "; const found=[];
+  for(const [w] of DICT){ const re=w.length===1?new RegExp(`(?<![가-힣A-Za-z])${reEsc(w)}(?=랑|이랑|하고|도|와|을|를|,|\\.|\\s|$)`,"g"):new RegExp(reEsc(w).replace(/ /g,"\\s?"),"g");
+    let m; while((m=re.exec(s))){ const after=s.slice(m.index+m[0].length,m.index+m[0].length+12); if(!NEG.test(after)&&!found.includes(w)) found.push(w); } s=s.replace(re,x=>" ".repeat(x.length)); }
+  const cands=[]; const re2=/([가-힣A-Za-z0-9]{1,8}?)(?:을|를|이랑|랑|하고|도|와|과)?\s*(?:꼭\s*|미리\s*|각자\s*)?(?:가져|챙기|챙겨|지참|준비해|들고)/g; let m;
+  while((m=re2.exec(s))){ const w=m[1].trim(); if(w.length>=2&&!STOP.has(w)&&!/마다|요일|매주|매번|매일|항상/.test(w)&&!allSubjects().includes(w)&&!ALIAS[w]&&!cands.includes(w)) cands.push(w); }
+  return {items:found,cands}; }
+const TASK_RE=/수행|발표|제출|쪽지\s*시험|퀴즈|시험/, REP_RE=/매주|매번|항상|(?:시간|수업|날|때)\s*마다|마다/;
+function analyze(text){
+  const today=day0(new Date()); const clauses=text.split(/[,\n.!]|그리고/).map(c=>c.trim()).filter(Boolean);
+  const entries=[],cands=[],tasks=[],repeats=[],notes=[]; let ctxDate=null,ctxSub=null;
+  for(const c of clauses){
+    if(REP_RE.test(c)){ const f=findSubject(c); const {items,cands:cc}=extractItems(c); cc.forEach(x=>{if(!cands.includes(x)) cands.push(x);});
+      const all=allSubjects(); const subs=f?(f.name?[f.name]:ALIAS[f.alias].filter(o=>all.includes(o))):[];
+      items.forEach(it=>{ const tg=subs.length?subs:(ITEM_HINT[it]||[]).filter(h=>all.includes(h)); if(tg.length) tg.forEach(s2=>{ if(!repeats.some(r=>r.subject===s2&&r.item===it)) repeats.push({subject:s2,item:it}); }); else if(!notes.length) notes.push("반복은 과목으로 적어 주세요 (예: 체육 시간마다 체육복)"); });
+      continue; }
+    const exp=explicitDate(c,today), found=findSubject(c); let date;
+    if(exp) date=exp.d; else if(found&&/다음\s*\S*\s*(시간|수업)/.test(c)) date=nextDayWith(found,today)||nextSchoolDay(today);
+    else if(ctxDate) date=ctxDate; else if(found) date=nextDayWith(found,today)||nextSchoolDay(today); else date=nextSchoolDay(today);
+    let sub=resolveSubject(found,date); if(!sub&&ctxDate&&keyOf(ctxDate)===keyOf(date)) sub=ctxSub;
+    const {items,cands:cc}=extractItems(c);
+    items.forEach(it=>{ const h=ITEM_HINT[it]||[]; const hint=sub&&h.includes(sub)?sub:h.find(x=>subjectsOn(date).includes(x)); entries.push({date:keyOf(date),subject:hint||sub||"기타",item:it==="교과서"&&sub?`${sub} 교과서`:it}); });
+    cc.forEach(x=>{if(!cands.includes(x)) cands.push(x);});
+    if(TASK_RE.test(c)){ let title=c.replace(/(다음\s*주|담주|이번\s*주)?\s*(월|화|수|목|금)요일|내일|모레|오늘|\d{1,2}\s*[\/.월]\s*\d{1,2}\s*일?|(?<![월\d])\d{1,2}\s*일(?!요)/g,""); if(sub) title=title.replace(sub,""); if(found&&found.alias) title=title.replace(found.alias,""); tasks.push({date:keyOf(date),subject:sub||"기타",title:title.replace(/\s+/g," ").trim()||c}); }
+    ctxDate=date; ctxSub=sub;
+  }
+  return {entries,cands,tasks,repeats,notes};
+}
+function runDemo(){
+  const r=analyze(document.getElementById("demoIn").value); const today=new Date();
+  const g={}; r.repeats.forEach(e=>(g[e.subject]=g[e.subject]||[]).push(e.item));
+  document.getElementById("rRep").innerHTML=Object.keys(g).length?Object.entries(g).map(([s,it])=>`<div class="rg">${esc(s)}</div><div class="chips">${it.map(i=>`<span class="chip">${emojiOf(i)} ${esc(i)}</span>`).join("")}</div>`).join(""):'<div class="empty">"체육 시간마다"처럼 쓰면 여기에</div>';
+  const byD={}; r.entries.forEach(e=>{ byD[e.date]=byD[e.date]||{}; (byD[e.date][e.subject]=byD[e.date][e.subject]||[]).push(e.item); });
+  document.getElementById("rDay").innerHTML=Object.keys(byD).length?Object.keys(byD).sort().map(k=>{ const dd=diffDays(today,fromKey(k)); const lab=dd===1?"내일":dd===2?"모레":""; return Object.entries(byD[k]).map(([s,it])=>`<div class="rg">${lab?lab+" · ":""}${fmtDate(fromKey(k))} · ${esc(s)}</div><div class="chips">${it.map(i=>`<span class="chip">${emojiOf(i)} ${esc(i)}</span>`).join("")}</div>`).join(""); }).join(""):'<div class="empty">"내일 미술 물감"처럼 쓰면 여기에</div>';
+  document.getElementById("rTask").innerHTML=r.tasks.length?r.tasks.map(t=>{ const dd=diffDays(today,fromKey(t.date)); return `<div class="rg">${fmtDate(fromKey(t.date))} · D-${dd}</div><div class="chips"><span class="chip" style="color:var(--red)">${esc(t.subject)} · ${esc(t.title)}</span></div>`; }).join(""):'<div class="empty">"수행", "발표", "제출"을 쓰면 여기에</div>';
+  const ex=[]; if(r.cands.length) ex.push(`❓ 단어장에 없는 물건: ${r.cands.map(esc).join(", ")} (앱에서 눌러 추가할 수 있어요)`); r.notes.forEach(n=>ex.push("ℹ️ "+esc(n)));
+  document.getElementById("rExtra").innerHTML=ex.join(" · ");
+}
+document.getElementById("demoIn").addEventListener("input",runDemo);
+document.getElementById("exs").onclick=e=>{ if(e.target.tagName==="BUTTON"){ document.getElementById("demoIn").value=e.target.textContent; runDemo(); } };
+
+/* 시작 */
+const start=parseInt((location.hash||"").slice(1),10);
+show(isNaN(start)?0:start-1, !isNaN(start)&&start>1);
+</script>
+</body>
+</html>
